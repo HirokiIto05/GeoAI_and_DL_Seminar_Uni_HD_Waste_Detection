@@ -1,0 +1,75 @@
+```{python}
+import shutil
+import os
+import geopandas as gpd
+```
+```{python}
+waste = gpd.read_file("/Users/ito_hiroki/05.Lecture/GeoAI/GeoAI/data/points/waste.geojson")  
+non_waste = gpd.read_file("/Users/ito_hiroki/05.Lecture/GeoAI/GeoAI/data/points/non_waste.geojson") 
+
+merged = gpd.read_file("/Users/ito_hiroki/05.Lecture/GeoAI/GeoAI/data/points/merged.geojson") 
+```
+
+```{python}
+import pandas as pd
+```
+
+```{python}
+import pandas as pd
+joined_data
+joined_data = pd.concat([waste, non_waste], ignore_index=True)
+joined_data = gpd.GeoDataFrame(joined_data, geometry='geometry', crs=waste.crs)
+```
+
+```{python}
+tile_id_waste = waste['tile_id']
+tile_id_non_waste = non_waste['tile_id']
+```
+
+
+```{python}
+# base_path_prefix
+base_path_prefix = "690585b76415e43597ffd7eb_complete_"
+
+# tile_id_wasteの各値を連結してファイルパスを作成
+file_paths = [f"{base_path_prefix}{tile_id}.tif" for tile_id in tile_id_waste]
+```
+
+```{python}
+src_dir = "/Users/ito_hiroki/05.Lecture/GeoAI/GeoAI/data/Freetown_tiles_5m"
+dst_dir = "/Users/ito_hiroki/05.Lecture/GeoAI/GeoAI/data/waste"
+
+os.makedirs(dst_dir, exist_ok=True)
+```
+
+
+```{python}
+for file_path in file_paths:
+	src_path = os.path.join(src_dir, os.path.basename(file_path))
+	dst_path = os.path.join(dst_dir, os.path.basename(file_path))
+	if os.path.exists(src_path):
+		shutil.copy2(src_path, dst_path)
+	else:
+		print(f"Not found: {src_path}")
+```
+
+
+```{python}
+file_paths = [f"{base_path_prefix}{tile_id}.tif" for tile_id in tile_id_non_waste]
+file_paths
+src_dir = "/Users/ito_hiroki/05.Lecture/GeoAI/GeoAI/data/Freetown_tiles_5m"
+dst_dir = "/Users/ito_hiroki/05.Lecture/GeoAI/GeoAI/data/non-waste"
+file_paths
+# os.makedirs(dst_dir, exist_ok=True)
+```
+
+
+```{python}
+for file_path in file_paths:
+	src_path = os.path.join(src_dir, os.path.basename(file_path))
+	dst_path = os.path.join(dst_dir, os.path.basename(file_path))
+	if os.path.exists(src_path):
+		shutil.copy2(src_path, dst_path)
+	else:
+		print(f"Not found: {src_path}")
+```

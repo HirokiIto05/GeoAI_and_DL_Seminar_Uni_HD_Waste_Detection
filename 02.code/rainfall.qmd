@@ -1,0 +1,110 @@
+
+```{python}
+import cdsapi
+import xarray as xr
+# import scipy.io.netcdf as S
+# from scipy.io import netcdf
+import pandas as pd
+import numpy as np
+```
+
+
+```{python}
+# 1. ERA5-Land からデータをダウンロード（Copernicus API）
+client = cdsapi.Client()
+
+dataset = "reanalysis-era5-land"
+request = {
+    "variable": ["total_precipitation"],
+    "year": "2025",
+    "month": "05",
+    "day": [
+        "01", "02", "03",
+        "04", "05", "06",
+        "07", "08", "09",
+        "10", "11", "12",
+        "13", "14", "15",
+        "16", "17", "18",
+        "19", "20", "21",
+        "22", "23", "24",
+        "25", "26", "27",
+        "28", "29", "30",
+        "31"
+    ],
+    # "day": [f"{d:02d}" for d in range(1, 32)],
+    "time": [f"{h:02d}:00" for h in range(24)],  # 00:00〜23:00
+    # "time": ["09:00"],
+    "data_format": "netcdf",
+    "download_format": "unarchived",
+    "area": [8.7, -13.4, 8, -12.9]
+}
+
+client.retrieve(dataset, request).download()
+```
+
+
+```{python}
+# 2. 読み込みと日積算
+ds = xr.open_dataset('8226147e949833b3460e6bfa18aabea1.nc')
+prec = ds['tp'] * 1000  # m → mm
+# すでに日毎データなのでresampleは不要
+prec_daily = prec
+```
+
+```{python}
+ds = xr.open_dataset('2025_04.nc')
+tp = ds["tp"] * 1000.0  # m → mm
+
+# bbox内を空間平均（lat, lon 次元名はデータによって 'latitude','longitude'）
+tp_mean = tp.mean(dim=["latitude","longitude"])
+
+# 日合計を計算（1時間値の合計）
+tp_daily = tp_mean.resample(valid_time="1D").sum()
+tp_daily
+# 雨日フラグ（微小値を切り捨て）
+rain_day = (tp_daily > 1)  # 1 mm/day 以上を「降雨あり」と判定
+df
+df = pd.DataFrame({
+    "date": tp_daily["valid_time"].values,
+    "rain_mm_day": tp_daily.values,
+    "rain_flag": rain_day.values.astype(int)
+})
+df
+print(df.head())
+```
+
+
+
+```{python}
+# 3. イベント抽出
+threshold = 30  # mm/day
+rain = prec_daily.mean(dim=['latitude', 'longitude'])
+df = rain.to_dataframe().reset_index().rename(columns={'tp': 'rain_mm'})
+```
+
+
+
+```{python}
+
+# 連続降雨イベントIDを付与
+df['event'] = (df['rain_mm'] > threshold).astype(int)
+df['event_id'] = (df['event'].diff() == 1).cumsum()
+df.loc[df['event'] == 0, 'event_id'] = np.nan
+
+# # 4. 出力
+# events = df[df['event'] == 1].groupby('event_id').agg(
+#     start=('time', 'min'),
+#     end=('time', 'max'),
+#     total_rain=('rain_mm', 'sum')
+# ).reset_index(drop=True)
+
+# events.to_csv('freetown_rain_events.csv', index=False)
+# print(events.head())
+```
+
+
+```{python}
+# sort by rain_mm descending and display
+df.sort_values('rain_mm', ascending=False).reset_index(drop=True)
+df.sort_values('rain_mm', ascending=True).reset_index(drop=True)
+```

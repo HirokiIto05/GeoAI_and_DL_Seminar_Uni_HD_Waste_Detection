@@ -1,0 +1,26 @@
+
+```{r}
+library(sf)
+library(tidyverse)
+# waste <- st_read("/Users/ito_hiroki/05.Lecture/GeoAI/GeoAI/data/points/waste.geojson", quiet = TRUE)
+# non_waste <- st_read("/Users/ito_hiroki/05.Lecture/GeoAI/GeoAI/data/points/non_waste.geojson", quiet = TRUE)
+```
+
+```{r}
+df_merged_raw <- st_read("/Users/ito_hiroki/05.Lecture/GeoAI/GeoAI/data/points/merged.geojson", quiet = TRUE)
+```
+
+
+```{r}
+df_merged <- df_merged_raw |> 
+    mutate(
+        is_waste = if_else(!is.na(waste), TRUE, FALSE),
+    ) |>
+    select(id, is_waste, row, col, geometry) |>
+    arrange(row, col)
+```
+
+```{r}
+
+
+```

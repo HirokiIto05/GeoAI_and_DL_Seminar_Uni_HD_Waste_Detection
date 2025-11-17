@@ -1,0 +1,6 @@
+01.data/
+Dockerfile
+docker-compose.yml
+.devcontainer/
+
+*.DS_Store
