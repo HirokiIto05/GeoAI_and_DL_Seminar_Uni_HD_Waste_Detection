@@ -1,3 +1,5 @@
+02_clean/
+03_analyze/
 99_cover/
 
 Dockerfile
@@ -7,7 +9,11 @@ docker-compose.yml
 *.DS_Store
 *.tif
 data/intermediate/test_images/
+data/raw/test_images/
 *.nc
 *.jpg
 *.png
 *.txt
+*.gpkg
+
+src/

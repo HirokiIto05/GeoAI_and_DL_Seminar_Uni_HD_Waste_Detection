@@ -8,213 +8,36 @@ import pandas as pd
 from io import StringIO
 import numpy as np
 
-import ee
+import rasterio
+import numpy as np
+from pyprojroot.here import here
 ```
 
 ```{python}
-
-# Clear existing session
-try:
-    ee.Reset()
-except:
-    pass
-
-# Authenticate with correct scopes (browser will open)
-ee.Authenticate(
-    scopes=[
-        'https://www.googleapis.com/auth/earthengine',
-        'https://www.googleapis.com/auth/devstorage.full_control',  # Cloud Storage
-        'https://www.googleapis.com/auth/drive.file'  # Drive (file scope)
-    ]
-)
-```
-
-```{python}
-# 
-# ee.Initialize()
-# ee.Authenticate()
-```
-
-```{python}
-# Freetown AOI
-aoi = ee.Geometry.Rectangle([-13.4, 8.2, -12.9, 8.7])
-
-# Target date (heavy rain day found in ERA5-Land)
-# Sentinel-1 is captured every few days, so set a wider period
-t0 = '2025-10-15'
-before_start, before_end = '2025-10-08', '2025-10-14'  # 約1週間前
-after_start,  after_end  = '2025-10-16', '2025-10-22'  # 約1週間後
-
-print(f"🎯 Target date: {t0}")
-print(f"📅 Before period: {before_start} to {before_end} ({(pd.to_datetime(before_end) - pd.to_datetime(before_start)).days} days)")
-print(f"📅 After period: {after_start} to {after_end} ({(pd.to_datetime(after_end) - pd.to_datetime(after_start)).days} days)")
-
-```
-
-```{python}
-def s1_ic(start, end):
-    ic = (ee.ImageCollection('COPERNICUS/S1_GRD')
-            .filterBounds(aoi)
-            .filterDate(start, end)
-            .filter(ee.Filter.eq('instrumentMode','IW'))
-            .filter(ee.Filter.listContains('transmitterReceiverPolarisation','VV'))
-            .filter(ee.Filter.listContains('transmitterReceiverPolarisation','VH'))
-            .select(['VV','VH']))
+# ===== 入力ファイル =====
+dry_path = here("data/raw/precipitation/dry_season.tif")   # 乾季
+wet_path = here("data/raw/precipitation/flooding.tif")   # 雨季
+output_path = here("data//precipitation/difference_wet_minus_dry.tif")
     
-    # デバッグ: 画像数を確認
-    size = ic.size().getInfo()
-    print(f"Period {start} to {end}: {size} images found")
+# ===== TIFF を読み込み =====
+with rasterio.open(dry_path) as dry_src, rasterio.open(wet_path) as wet_src:
     
-    if size == 0:
-        print(f"⚠️  No images found for {start} to {end}")
-        return None
+    # メタデータ（GeoTIFF の座標情報・解像度など）をコピー
+    meta = dry_src.meta.copy()
     
-    return ic
+    # 画像データ読み込み（1バンド想定）
+    dry = dry_src.read(1).astype("float32")
+    wet = wet_src.read(1).astype("float32")
 
-```
+# ===== 差分（雨季 − 乾季） =====
+difference = wet - dry
 
-```{python}
+# ===== 結果を GeoTIFF として保存 =====
+meta.update(dtype="float32")
 
-# Get and check image collection
-target_ic = s1_ic('2025-10-15', '2025-10-15')
-# after_ic = s1_ic(after_start, after_end)
+with rasterio.open(output_path, "w", **meta) as dst:
+    dst.write(difference, 1)
 
-target = target_ic.median().clip(aoi)
-
-# Process only if images exist
-# if before_ic is not None and after_ic is not None:
-#     before = before_ic.median().clip(aoi)
-#     after = after_ic.median().clip(aoi)
-#     print("✓ Successfully created before/after composites")
-# else:
-#     print("❌ Cannot proceed: insufficient images")
-#     print("Tip: Try expanding the date range or checking Sentinel-1 availability")
-#     print("     Visit: https://scihub.copernicus.eu/dhus/#/home")
-```
-
-```{python}
-# Difference (dB): after - before (gets darker when wet = negative)
-# dVV = after.select('VV').subtract(before.select('VV'))
-
-# # Threshold (initial value may need adjustment)
-# wet_thresh = after.select('VV').lt(-17).And(after.select('VH').lt(-24))
-# wet_delta  = dVV.lt(-2)
-# wet_mask   = wet_thresh.And(wet_delta).selfMask()
-
-wet_thresh = target.select('VV').lt(-17).And(target.select('VH').lt(-24))
-wet_delta  = target.lt(-2)
-wet_mask   = wet_thresh.And(wet_delta).selfMask()
-
-```
-
-```{python}
-# Export (Google Drive)
-task = ee.batch.Export.image.toDrive(
-    image=wet_mask.uint8(),
-    description=f'S1_wetmask_Freetown_{t0}',
-    folder='gee_exports',
-    fileNamePrefix=f'S1_wetmask_Freetown_{t0}',
-    region=aoi.getInfo()['coordinates'],
-    scale=10, maxPixels=1e13
-)
-task.start()
-print('Export started:', task.id)
-```
-
-
-```{python}
-# Export (Google Drive)
-task = ee.batch.Export.image.toDrive(
-    image=wet_mask.uint8(),
-    description=f'S1_wetmask_Freetown_{t0}',
-    folder='gee_exports',
-    fileNamePrefix=f'S1_wetmask_Freetown_{t0}',
-    region=aoi.getInfo()['coordinates'],
-    scale=10, maxPixels=1e13
-)
-task.start()
-print('Export started:', task.id)
-```
-
-
-```{python}
-
-# import ee, geemap
-# ee.Initialize()
-
-aoi = ee.Geometry.Rectangle([-13.4, 8.2, -12.9, 8.7])
-
-# Example: layer to visualize
-# Reuse variables created for wet_mask, dVV, before, after
-# (If you closed the notebook, you can recalculate with the same function)
-
-m = geemap.Map()
-m.set_center(-13.23, 8.48, 12)
-
-m.add_basemap('SATELLITE')
-m.add_layer(before.select('VV'), {'min':-22,'max':-5}, 'Before VV')
-m.add_layer(dVV, {'min':-5,'max':3,'palette':['#08306b','#ffffff','#67000d']}, 'ΔVV')
-m.add_layer(wet_mask, {'palette':['#00A8E8']}, 'Ephemeral water')
-
-m.add_layer(aoi, {}, 'AOI', False)
-m
-
-```
-
-
-
-
-
-```{python}
-import ee, geemap
-ee.Initialize()
-
-# Freetown AOI
-aoi = ee.Geometry.Rectangle([-13.4, 8.2, -12.9, 8.7])
-
-def s1_ic(start, end, orbit=None, need_vh=True):
-    col = (ee.ImageCollection('COPERNICUS/S1_GRD')
-           .filterBounds(aoi)
-           .filterDate(start, end)
-           .filter(ee.Filter.eq('instrumentMode','IW'))
-           .filter(ee.Filter.listContains('transmitterReceiverPolarisation','VV')))
-    if need_vh:
-        col = col.filter(ee.Filter.listContains('transmitterReceiverPolarisation','VH'))
-    if orbit in ('ASCENDING','DESCENDING'):
-        col = col.filter(ee.Filter.eq('orbitProperties_pass', orbit))
-    return col.select(['VV','VH'])
-
-def median_or_none(ic):
-    # ic.size()>0 なら median、そうでなければ 空Image を返す
-    return ee.Image(ee.Algorithms.If(ic.size().gt(0), ic.median(), ee.Image([])))
-
-# 例：イベント前後
-before_ic = s1_ic('2020-08-12', '2020-08-14', orbit=None, need_vh=True)
-after_ic  = s1_ic('2020-08-16', '2020-08-20', orbit=None, need_vh=True)
-
-print('before size:', before_ic.size().getInfo())
-print('after  size:', after_ic.size().getInfo())
-
-before = median_or_none(before_ic).clip(aoi)
-after  = median_or_none(after_ic ).clip(aoi)
-
-# どちらかが空なら、範囲を拡げて再トライ（±6〜12日に広げるなど）
-def ensure_not_empty(img, start, end, expand_days=6):
-    return ee.Image(ee.Algorithms.If(
-        img.bandNames().size().gt(0),
-        img,
-        median_or_none(s1_ic(
-            ee.Date(start).advance(-expand_days,'day').format('YYYY-MM-dd').getInfo(),
-            ee.Date(end).advance( expand_days,'day').format('YYYY-MM-dd').getInfo(),
-            orbit=None, need_vh=True
-        )).clip(aoi)
-    ))
-
-before = ensure_not_empty(before, '2020-08-12', '2020-08-14')
-after  = ensure_not_empty(after,  '2020-08-16', '2020-08-20')
-
-# ここでバンドが本当にあるか確認
-print('before bands:', before.bandNames().getInfo())
-print('after  bands:', after.bandNames().getInfo())
+print("差分画像を保存しました：", output_path)
 
 ```

@@ -10,83 +10,132 @@ import pandas as pd
 
 from pyprojroot.here import here
 
-# ====== Basic path settings ======
-base_filename = "690585b76415e43597ffd7eb_complete_"
+
+
+def delete_all_files_in_folder():
+    folder_base_path = "data/raw/"
+
+    for cv_i in [1,2,3,4,5]:
+        for category_i in ["train", "val", "test"]:
+            for folder_name_i in ["waste", "non_waste"]:
+                if category_i in ["train", "val"]:
+                    folder_path = folder_base_path + "images" + "/cv" + str(cv_i) + "/" + category_i + "/" + folder_name_i
+
+                else:
+                    folder_path = folder_base_path + "images_test" + "/" + folder_name_i
+                    
+                for file_path in Path(here(folder_path)).iterdir():
+                    print(file_path)
+                    if os.path.isfile(file_path):
+                        os.remove(file_path)
+
+
+delete_all_files_in_folder()
+
+
 
 # ====== Load GeoJSON and preprocess ======
-df_merged_raw = gpd.read_file(
-    here("01_data/points/merged.geojson")
+df = gpd.read_file(
+    here("data/points/merged.geojson")
 )
 
-df_merged = (
-    df_merged_raw
-    .assign(
-        is_waste = df_merged_raw["layer"] == "waste_point"
-    )[["id", "is_waste", "row", "col", "geometry"]]
-    .sort_values(["id", "row", "col"])
-)
-df_merged["row"] = df_merged["row"].astype(int)
-df_merged["col"] = df_merged["col"].astype(int)
 
-# ====== Generate a list of filenames for waste / non-waste ======
-def generate_list_files(df_merged, is_waste_i):
 
-    subset = df_merged[df_merged["is_waste"] == is_waste_i].copy()
-    subset["file_path"] = (
-        "r" + subset["row"].astype(str)
-        + "_c" + subset["col"].astype(str)
-        + ".tif"
+def generate_tiles_for_cv(df, cv_i, layer_i, seed=111):
+    # Filter for the layer
+    df_based = df[df["layer"] == layer_i]
+
+    # ---- Test set ----
+    df_cv_test = df_based[df_based["fold"] == cv_i]
+    list_files_test = df_cv_test["tile_id"].drop_duplicates().tolist()
+
+    # ---- Validation set: 15% sampled within each fold (except cv_i) ----
+    df_not_test = df_based[df_based["fold"] != cv_i]
+
+    # Equivalent of dplyr::slice_sample(prop=0.15, by="fold")
+    # 12.5 means that 15% of full samples is 12.5% of remaining 80%
+    np.random.seed(seed)
+    df_cv_val = (
+        df_not_test.groupby("fold", group_keys=False)
+        .apply(lambda g: g.sample(frac=0.125, replace=False, random_state=seed))
     )
 
-    return subset["file_path"].tolist()
+    list_files_val = df_cv_val["tile_id"].drop_duplicates().tolist()
 
-# ====== Assign files to train / val / test subfolders ======
-def assign_files(list_files, category_i: str, folder_name_i: str):
+    # ---- Train set: remove tiles used in test and val ----
+    df_cv_train = df_based[
+        ~df_based["tile_id"].isin(list_files_test)
+        & ~df_based["tile_id"].isin(list_files_val)
+    ]
+
+    list_files_train = df_cv_train["tile_id"].drop_duplicates().tolist()
+
+    # Return a dict similar to R’s list()
+    return {
+        "train": list_files_train,
+        "val": list_files_val,
+        "test": list_files_test
+    }
+
+def generate_cv_files(df, layer_i):
+    list_cv1 = generate_tiles_for_cv(df, cv_i=1, layer_i=layer_i)
+    list_cv2 = generate_tiles_for_cv(df, cv_i=2, layer_i=layer_i)
+    list_cv3 = generate_tiles_for_cv(df, cv_i=3, layer_i=layer_i)
+    list_cv4 = generate_tiles_for_cv(df, cv_i=4, layer_i=layer_i)
+    list_cv5 = generate_tiles_for_cv(df, cv_i=5, layer_i=layer_i)
+
+    list_cv = {
+        "cv1": list_cv1,
+        "cv2": list_cv2,
+        "cv3": list_cv3,
+        "cv4": list_cv4,
+        "cv5": list_cv5,
+    }
+    return list_cv
+
+
+
+
+
+list_cv_waste = generate_cv_files(df, layer_i="waste_point")
+list_cv_non_waste = generate_cv_files(df, layer_i="non-waste_point")
+
+
+
+def assign_files(list_cv, category_i: str, layer_i: str, cv_i = None):
     """
     list_files: list of filenames
     category_i: "train", "val", or "test"
-    folder_name: "waste" or "non_waste"
+    layer_i: "waste_point" or "non-waste_point"
     """
-    for fname in list_files:
-        src = "01.data/raw/tiles/" + fname
-        dst = "01.data/raw/images" + "/" + category_i + "/" + folder_name_i + "/" + fname
-        src_path = here(src)
-        dst_path = here(dst)
-        if Path(src_path).exists():
-            shutil.copy2(src_path, dst_path)
-        else:
-            print(f"File not found, skipped: {src_path}")
+    folder_base_path = "data/raw/"
 
-def copy_files_to_category(df_merged, is_waste_i: bool):
-
-    if is_waste_i:
-        folder_name_i = "waste"
-    else:
-        folder_name_i = "non_waste"
-
-    # List all files in waste / non_waste folder
-    list_files = generate_list_files(df_merged, is_waste_i)
-
-    total_n = len(list_files)
-    idx = list(range(total_n))
-
-    random.seed(1111)  # Equivalent to R's set.seed(1111)
-    random.shuffle(idx)
-
-    # 70% train, 15% val, 15% test
-    train_n = int(total_n * 0.7)
-    val_n   = int(total_n * 0.15)
-    test_n  = total_n - train_n - val_n
-
-    list_files_train = [list_files[i] for i in idx[0:train_n]]
-    list_files_val   = [list_files[i] for i in idx[train_n:train_n+val_n]]
-    list_files_test  = [list_files[i] for i in idx[train_n+val_n:total_n]]
-
-    assign_files(list_files_train, "train", folder_name_i)
-    assign_files(list_files_val,   "val",   folder_name_i)
-    assign_files(list_files_test,  "test",  folder_name_i)
+    # list_files = list_cv[category_i]
+    for cv_i in range(1, 6) :
+        for category_i in ["train", "val", "test"]:
+            list_files = list_cv["cv" + str(cv_i)][category_i]
+            for fname in list_files:
+                src = "data/raw/tiles/" + fname + ".tif"
+                if category_i in ["train", "val"]:
+                    dst = folder_base_path + "images" + "/cv" + str(cv_i) + "/" + category_i + "/" + layer_i + "/" + fname + ".tif"
+                elif category_i == "test":
+                    dst = folder_base_path + "images_test" + "/" + layer_i + "/" + fname + ".tif"
+                
+                src_path = here(src)
+                dst_path = here(dst)
+                if Path(src_path).exists():
+                    shutil.copy2(src_path, dst_path)
+                else:
+                    print(f"File not found, skipped: {src_path}")
 
 
-# Split into train/val/test for waste and non-waste
-copy_files_to_category(True)
-copy_files_to_category(False)
+
+fname = "r2187_c207"
+src = "data/raw/tiles/" + fname + ".tif"
+dst = folder_base_path + "images" + "/cv" + str(cv_i) + "/" + category_i + "/" + layer_i + "/" + fname + ".tif"
+
+
+
+
+assign_files(list_cv_waste, category_i="train", layer_i="waste")
+assign_files(list_cv_non_waste, category_i="train", layer_i="non_waste")

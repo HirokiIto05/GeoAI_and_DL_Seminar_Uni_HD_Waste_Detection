@@ -2,7 +2,7 @@ from PIL import Image
 from pyprojroot.here import here
 
 # Open the TIFF image
-dir_test = here("01_data/raw/images/test/waste/sample_image.tif")
+dir_test = here("data/raw/images/test/waste/sample_image.tif")
 
 
 # Save the image as PNG
@@ -13,8 +13,8 @@ print(f"Image saved as {png_image_path}")
 
 
 
-list_files_waste = [f for f in os.listdir(here("01_data/raw/images/test/waste/")) if f.endswith('.tif')]
-list_files_non_waste = [f for f in os.listdir(here("01_data/raw/images/test/non_waste/")) if f.endswith('.tif')]
+list_files_waste = [f for f in os.listdir(here("data/raw/images/test/waste/")) if f.endswith('.tif')]
+list_files_non_waste = [f for f in os.listdir(here("data/raw/images/test/non_waste/")) if f.endswith('.tif')]
 
 def convert_tif_to_png(list_files, is_waste_i):
   if is_waste_i:
@@ -23,8 +23,8 @@ def convert_tif_to_png(list_files, is_waste_i):
       folder_name_i = "non_waste"
 
   for fname in list_files:
-      src = here(f"01_data/raw/images/test/{folder_name_i}/{fname}")
-      dst_folder = here(f"01_data/intermediate/test_images/{folder_name_i}")
+      src = here(f"data/raw/images/test/{folder_name_i}/{fname}")
+      dst_folder = here(f"data/intermediate/test_images/{folder_name_i}")
 
       png_fname = fname.replace(".tif", ".png")
       dst = os.path.join(dst_folder, png_fname)

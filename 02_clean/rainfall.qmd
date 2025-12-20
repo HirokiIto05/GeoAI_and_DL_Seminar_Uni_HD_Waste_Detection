@@ -8,6 +8,13 @@ import pandas as pd
 import numpy as np
 
 from pyprojroot.here import here
+
+import ee
+
+import folium
+from folium import plugins
+import geemap.foliumap as geemap
+
 ```
 
 
@@ -18,8 +25,8 @@ client = cdsapi.Client()
 dataset = "reanalysis-era5-land"
 request = {
     "variable": ["total_precipitation"],
-    "year": "2025",
-    "month": "10",
+    "year": "2017",
+    "month": "07",
     "day": [
         "01", "02", "03",
         "04", "05", "06",
@@ -48,14 +55,14 @@ client.retrieve(dataset, request).download()
 ```{python}
 # 2. Read and daily accumulation
 # ds = xr.open_dataset('../01.data/precipitation/day/2025_10.nc')
-ds = xr.open_dataset(here('01.data/precipitation/day/2025_10.nc'))
+ds = xr.open_dataset(here('01_data/raw/precipitation/day/2025_10.nc'))
 prec = ds['tp'] * 1000  # m to mm
 # Data is already daily, so resample is not needed
 prec_daily = prec
 ```
 
 ```{python}
-ds = xr.open_dataset(here('01.data/precipitation/day/2025_10.nc'))
+ds = xr.open_dataset(here('01_data/raw/precipitation/day/2025_10.nc'))
 tp = ds["tp"] * 1000.0  # m to mm
 
 # Spatial average within bbox (dimension names may be 'latitude','longitude' depending on data)
@@ -76,7 +83,8 @@ df = pd.DataFrame({
 print(df.head())
 ```
 
-
+```{python}
+```
 
 ```{python}
 # 3. Event extraction
@@ -110,4 +118,64 @@ df.loc[df['event'] == 0, 'event_id'] = np.nan
 # sort by rain_mm descending and display
 df.sort_values('rain_mm', ascending=False).reset_index(drop=True)
 df.sort_values('rain_mm', ascending=True).reset_index(drop=True)
+```
+
+# Detect the available days 
+
+```{python}
+# Clear existing session
+try:
+    ee.Reset()
+except:
+    pass
+
+# 
+ee.Initialize()
+# ee.Authenticate()
+
+```
+
+```{python}
+# Freetown AOI
+# aoi = ee.Geometry.Rectangle([-13.3, 8.2, -12.9, 8.5])
+
+
+aoi = ee.Geometry.Polygon([
+    [
+        [-13.3, 8.4],
+        [-13.15, 8.4],
+        [-13.15, 8.5],
+        [-13.3, 8.5],
+        [-13.3, 8.4]
+    ]
+])
+
+
+```
+
+```{python}
+def s1_ic(start, end):
+    ic = (ee.ImageCollection('COPERNICUS/S1_GRD')
+            .filterBounds(aoi)
+            .filterDate(start, end)
+            .filter(ee.Filter.eq('instrumentMode','IW'))
+            .filter(ee.Filter.listContains('transmitterReceiverPolarisation','VV'))
+            .filter(ee.Filter.listContains('transmitterReceiverPolarisation','VH'))
+            .select(['VH']))
+    
+    # Check if any images are found
+    size = ic.size().getInfo()
+    print(f"Period {start} to {end}: {size} images found")
+    
+    if size == 0:
+        print(f"⚠️  No images found for {start} to {end}")
+        return None
+    
+    return ic
+```
+
+
+```{python}
+a = s1_ic('2017-08-14', '2017-08-19')
+a
 ```

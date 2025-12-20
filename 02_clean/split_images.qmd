@@ -5,12 +5,16 @@ from pyprojroot.here import here
 ```
 
 ```{python}
-grid = gpd.read_file(here("01.data/grid/grid_modified.gpkg"))
-tif = "../01.data/690585b76415e43597ffd7eb.tif"
+grid = gpd.read_file(here("data/raw/grid/grid_modified.gpkg"))
+tif = "../01_data/raw/690585b76415e43597ffd7eb.tif"
 ```
 
 ```{python}
-for i, row in grid.iterrows():
+grid_filtered = grid.copy()
+```
+
+```{python}
+for i, row in grid_filtered.iterrows():
     tile = row["tile_id"]
     xmin, ymin, xmax, ymax = row.geometry.bounds
 
@@ -20,7 +24,7 @@ for i, row in grid.iterrows():
         "-projwin", str(xmin), str(ymax), str(xmax), str(ymin),
         "-co", "COMPRESS=LZW",
         tif,
-        f"../01.data/tiles/{tile}.tif"
+        f"../01_data/raw/tiles_c664/{tile}.tif"
     ]
 
     print(f"Processing {tile} ...")
