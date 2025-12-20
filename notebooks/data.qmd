@@ -1,0 +1,130 @@
+```{python}
+from pathlib import Path
+import shutil
+import random
+
+import geopandas as gpd
+import pandas as pd
+import numpy as np
+
+from pyprojroot.here import here
+
+import os
+import csv
+import sys
+
+from k_means_constrained import KMeansConstrained
+```
+
+```{python}
+sys.path.append("..")
+```
+
+# Split image 
+
+```{python}
+from src.data.split_images import *
+```
+
+```{python}
+grid = gpd.read_file(here("data/raw/grid/grid_modified.gpkg"))
+tif = "../01_data/raw/690585b76415e43597ffd7eb.tif"
+
+grid_filtered = grid.copy()
+```
+
+
+# Clustering
+
+```{python}
+from src.data.clustering import *
+```
+```{python}
+
+# ----------------------------------------------------
+# Read Data
+# ----------------------------------------------------
+df = gpd.read_file(here("data/raw/points/merged.gpkg"))
+df = df.drop_duplicates(subset="tile_id")  # distinct(tile_id, .keep_all = TRUE)
+summary = (
+    df.drop(columns="geometry")
+       .groupby("layer")
+       .agg(total=("tile_id", pd.Series.nunique))
+       .reset_index()
+)
+
+print(summary)
+
+df_cv = generate_balanced_clusters(df)
+# ----------------------------------------------------
+# Write results to GPKG
+# ----------------------------------------------------
+df_cv.to_file(here("data/intermediate/scv/points_for_cv.gpkg"), driver="GPKG")
+```
+
+```{python}
+```
+
+# Base Analysis Assignment
+```{python}
+from src.data.assign_file_base import *
+```
+
+```{python}
+delete_all_files_in_base()
+```
+
+```{python}
+# Read the merged point data as a GeoDataFrame
+df = gpd.read_file(
+    here("data/raw/points/merged.gpkg")
+)
+```
+
+```{python}
+# Generate train/val/test splits for each class
+list_files_dict_waste = generate_tiles_for_base(df, layer_i="waste")
+list_files_dict_non_waste = generate_tiles_for_base(df, layer_i="non_waste")
+
+# Copy files for each split and class
+assign_files_for_base(list_files_dict_waste, layer_i="waste")
+assign_files_for_base(list_files_dict_non_waste, layer_i="non_waste")
+```
+
+# SCV Analysis Assignment
+
+```{python}
+from src.data.assign_file_cv import *
+```
+```{python}
+df = gpd.read_file(here("data/intermediate/points/points_for_cv.gpkg"))
+
+# Check the Balance
+df.groupby("layer")["tile_id"].size()
+
+delete_all_files_in_folder()
+
+list_cv_waste = generate_cv_files(df, layer_i="waste")
+list_cv_non_waste = generate_cv_files(df, layer_i="non_waste")
+
+assign_files(list_cv_waste, layer_i="waste")
+assign_files(list_cv_non_waste, layer_i="non_waste")
+```
+
+
+# Convert tif files to png files for YOLO evaluation
+```{python}
+from src.data.convert_tif_to_png import *
+```
+
+```{python}
+delete_all_files_in_test()
+
+convert_tif_to_png(is_waste_i=True)
+convert_tif_to_png(is_waste_i=False)
+
+convert_tif_to_png_base(is_waste_i=True)
+convert_tif_to_png_base(is_waste_i=False)
+
+convert_tif_to_png_all()
+```

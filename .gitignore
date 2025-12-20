@@ -1,10 +1,13 @@
-01.data/
+99_cover/
+
 Dockerfile
 docker-compose.yml
 .devcontainer/
 
 *.DS_Store
 *.tif
-*.png
+data/intermediate/test_images/
 *.nc
 *.jpg
+*.png
+*.txt

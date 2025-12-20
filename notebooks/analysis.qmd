@@ -1,0 +1,111 @@
+```{python}
+from pathlib import Path
+import shutil
+import random
+
+import geopandas as gpd
+import pandas as pd
+import numpy as np
+
+from pyprojroot.here import here
+
+import os
+import csv
+import sys
+
+from k_means_constrained import KMeansConstrained
+```
+
+```{python}
+sys.path.append("..")
+```
+
+
+# Calculate Waste Density with different Grids
+
+```{python}
+from src.analysis.calculate_waste_density_grids import *
+```
+
+
+```{python}
+grid_10 = read_grid_data(gird_size=10)
+grid_20 = read_grid_data(gird_size=20)
+grid_30 = read_grid_data(gird_size=30)
+grid_40 = read_grid_data(gird_size=40)
+grid_50 = read_grid_data(gird_size=50)
+
+df_output_10 = wrap_calculate_waste_density_grids(grid_10)
+df_output_20 = wrap_calculate_waste_density_grids(grid_20)
+df_output_30 = wrap_calculate_waste_density_grids(grid_30)
+df_output_40 = wrap_calculate_waste_density_grids(grid_40)
+df_output_50 = wrap_calculate_waste_density_grids(grid_50)
+
+# df_output_10.to_file(here("data/density/waste_density_10.gpkg"), driver="GPKG")
+# df_output_20.to_file(here("data/density/waste_density_20.gpkg"), driver="GPKG")
+# df_output_30.to_file(here("data/density/waste_density_30.gpkg"), driver="GPKG")
+# df_output_40.to_file(here("data/density/waste_density_40.gpkg"), driver="GPKG")
+# df_output_50.to_file(here("data/density/waste_density_50.gpkg"), driver="GPKG")
+```
+
+
+# Calculate Moran's I 
+```{python}
+from src.analysis.moran import *
+```
+
+
+```{python}
+# read data
+df_waste_5 = read_data(grid_size=5)
+df_waste_20 = read_data(grid_size=20)
+# Create spatial weights matrix
+w_5 = calculate_weights(df_waste_5)
+w_20 = calculate_weights(df_waste_20)
+# Calculate global Moran's I
+mi_5 = calculate_global_moran(df_waste_5, w_5)
+mi_20 = calculate_global_moran(df_waste_20, w_20)
+
+
+summary_moran(mi_20, label="20m")
+summary_moran(mi_5, label="5m")
+
+
+# Calculate Local Moran's I
+lisa_20 = calculate_local_moran(df_waste_20, w_20)
+lisa_5 = calculate_local_moran(df_waste_5, w_5)
+
+df_results_20 = add_moral_local_results(df_waste_20, lisa_20)
+df_results_5 = add_moral_local_results(df_waste_5, lisa_5)
+
+# Save results
+df_results_5.to_file(here("data/intermediate/moran/waste_moran_5.gpkg"))
+df_results_20.to_file(here("data/intermediate/moran/waste_moran_20.gpkg"))
+```
+
+
+
+# Waterway Analysis
+
+```{python}
+from src.analysis.waterway_analysis import *
+```
+
+```{python}
+# Read data
+df = read_waste_data()
+df_buffer = read_buffer_waterway()
+
+# Merge waste hot spots with waterway buffer
+df_waste_waterway = merge_waste_waterway(df, df_buffer)
+hot_spots_near_waterway = df_waste_waterway[df_waste_waterway['waterway'] == True]
+
+
+df_summary_waterway = pd.DataFrame({
+    "Total_Hot_Spots": len(df),
+    "Hot_Spots_Near_Waterway": [len(hot_spots_near_waterway)],
+    "Proportion_Near_Waterway": [len(hot_spots_near_waterway) / len(df) if len(df) > 0 else 0]
+})
+
+df_summary_waterway
+```

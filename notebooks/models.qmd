@@ -1,0 +1,161 @@
+
+```{python}
+import pandas as pd
+from ultralytics import YOLO
+import os
+from pyprojroot.here import here
+
+import torch
+from great_tables import GT
+from great_tables.data import gtcars
+import gt_extras as gte
+from great_tables import GT
+from great_tables.data import airquality
+from great_tables import html
+```
+
+
+```{python}
+sys.path.append("..")
+```
+
+
+# Training YOLOv11 classification model
+
+```{python}
+from src.models.yolo_11v_cls import *
+```
+
+
+```{python}
+# Random sampling analysis
+train_base()
+
+# Cross Validation Analysis
+list_dir_path = generate_dir_train_val()
+
+train_each_cv(cv_i=1)
+train_each_cv(cv_i=2)
+train_each_cv(cv_i=3)
+train_each_cv(cv_i=4)
+train_each_cv(cv_i=5)
+```
+
+
+# Check F1 scores
+```{python}
+from src.models.check_f1_score import *
+```
+
+```{python}
+# Load the trained highest-performance model
+model = YOLO(here("models/runs/batch8_imgsz256/cv1/train/weights/best.pt"))
+```
+
+```{python}
+# Random Sampling Analysis
+list_test_waste_base = generate_test_base(is_waste_i=True)
+list_test_non_waste_base = generate_test_base(is_waste_i=False)
+
+result_base_waste = check_prediction(list_test_waste_base, is_waste_i = True, model_path=here("models/runs/batch8_imgsz256/base/train/weights/best.pt"))
+result_base_non_waste = check_prediction(list_test_non_waste_base, is_waste_i = False, model_path=here("models/runs/batch8_imgsz256/base/train/weights/best.pt"))
+
+result_base_waste = {"base_waste": result_base_waste}
+result_base_non_waste = {"base_non_waste": result_base_non_waste}
+
+dict_base = calculate_f1_score(None, result_base_waste, result_base_non_waste)
+df_base = pd.DataFrame([dict_base])
+base_epoch = summary_base_epoch()
+
+df_summary_base = generate_table_base_summary(df_base, base_epoch)
+df_summary_base['cv'] = 0
+df_summary_base['test_sample'] = "Random"
+
+df_summary_base.to_csv(here("output/f1_score/summary_yolo_batch8_imgsz256_base.csv"), index=False)
+```
+
+```{python}
+# Spatial Cross Validation Analysis
+
+# Get the list of test image files (either .jpg or .png)
+list_cv_waste = generate_list_cv_test(is_waste_i=True)
+list_cv_non_waste = generate_list_cv_test(is_waste_i=False)
+
+df_cv_waste = pd.DataFrame(result_base_waste, columns=["file_name", "actual", "prediction", "is_correct"])
+df_cv_non_waste = pd.DataFrame(result_base_non_waste, columns=["file_name", "actual", "prediction", "is_correct"])
+
+results_waste = aggregate_accuracy_cvs(list_cv_waste, is_waste_i=True)
+results_non_waste = aggregate_accuracy_cvs(list_cv_non_waste, is_waste_i=False)
+
+
+metrics_cv = aggregate_score_summary(results_waste, results_non_waste)
+df_summary_f1 = concat_cv_score_df(metrics_cv)
+
+list_epoch_info = summary_epoch()
+
+df_summary = generate_table_summary(df_summary_f1, list_epoch_info)
+
+
+dict_cv_color = {
+    1: "red",
+    2: "yellow",
+    3: "green",
+    4: "white",
+    5: "blue"
+}
+
+df_summary['cv'] = df_summary['cv'].astype(str)
+df_summary['test_sample'] = df_summary['cv'].astype(int).map(dict_cv_color)
+
+# df_summary.to_csv(here("output/f1_score/summary_yolo_batch8_imgsz256.csv"), index=False)
+```
+
+
+# Apply the highest performance model to all data
+```{python}
+from src.models.predict_all_files import *
+```
+
+```{python}
+# delete_all_predict()
+
+# Load all images, read them, and save results as a text file.
+list_all_results = apply_model_to_all_tiles()
+
+df_all = pd.DataFrame(list_all_results, columns=["tile_id", "category"])
+df_all['tile_id'] = df_all['tile_id'].str.replace('.png', '', regex=False)
+
+# df_all.to_csv(here("output/all_tiles_classification.csv"), index=False)
+
+# This command can be used in terminal to run prediction on all tiles and save the results
+# In practical, I recommend to run the following command in terminal instead of running the above code because it is much faster.
+# yolo predict model=models/runs/batch8_imgsz256/cv4/train/weights/best.pt source=01_data/intermediate/tiles_png/ save=False save_txt=True project=05_output/results_all_tiles/batch8_imgsz256/ 
+```
+
+
+# Filter images classified as waste with high confidence
+
+```{python}
+from src.models.detect_valid_tiles import *
+```
+```{python}
+# Filter images classified as waste with confidence >= 0.97
+# Convert to DataFrame and write CSV
+
+dir_txt_files = here("output/results_all_tiles/batch8_imgsz256/predict/labels")
+
+df_results = pd.DataFrame(results)[["tile_id", "label", "score"]]
+
+df_results.loc[(df_results["label"] == "waste") & (df_results["score"] <= 0.97), "label"] = "non_waste"
+
+df_grid = gpd.read_file(here("data/raw/grid/grid_modified.gpkg"))
+
+df_grid_new = df_grid.merge(df_results, on="tile_id", how="left")
+
+df_grid_new.to_file(here("data/predicted_tiles/results_all_tiles_97.gpkg"), driver="GPKG")
+
+# Save results
+# df_grid_new.to_file(here("data/predicted_tiles/results_all_tiles_97.gpkg"), driver="GPKG")
+```
+
+
