@@ -37,14 +37,6 @@ Here is a cleaner, fully formatted **Markdown version** of your workflow script:
 
 ## **1. Image Preparation**
 
-<!-- | Step | Task                              | Tool / Language | Inputs / Functions                                                 | Outputs                                         | Notebook             |
-| ---- | --------------------------------- | --------------- | ------------------------------------------------------------------ | ----------------------------------------------- | -------------------- |
-| 1.1  | Split images into tiles           | Python          | `src/data/split_images.py`                                         | `data/raw/tiles/*.tif`                          | `notebooks/data.qmd` |
-| 1.2  | Annotate points                   | QGIS            | —                                                                  | `data/raw/merged.gpkg`                          | —                    |
-| 1.3  | Assign files to folders           | Python          | `src/data/assign_files_base.py` <br> `src/data/assign_files_cv.py` | `data/raw/images/` <br> `data/raw/images_test/` | `notebooks/data.qmd` |
-| 1.4  | Convert `.tif` → `.png` (testing) | Python          | `src/data/convert_tif_to_png.py`                                   | `data/intermediate/images_test/`                | `notebooks/data.qmd` | -->
-
-
 ### **1.1 [Python] Split images into tiles**
 
 Breaks large images into smaller tile subsets for processing.
@@ -70,6 +62,8 @@ Manual annotation of waste / non-waste locations on raw imagery tiles.
   `data/raw/merged.gpkg`
 * **Notebook:**
   —
+
+![Annotation example](99_others/figure_for_README/waste_poiint.png){width=500px}
 
 ---
 
@@ -125,16 +119,13 @@ Creates spatial cross-validation groups based on clustering of image tile coordi
 * **Notebook:**
   `notebooks/data.qmd`
 
+![SCV Results](99_others/figure_for_README/scv_white.png){width=500px}
+
+
+
 ---
 
 ## **3. Model Training and Evaluation**
-
-<!-- | Step | Task                                 | Tool / Language | Inputs / Functions                 | Outputs                                                                                                                      | Notebook               |
-| ---- | ------------------------------------ | --------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
-| 3.1  | Train YOLO models                    | Python          | `src/models/yolo_11v_cls.py`       | `models/runs/batch8_imgsz256/base/` <br> `models/runs/batch8_imgsz256/cv1/` <br> `models/runs/batch8_imgsz256/cv2/` <br> `…` | `notebooks/models.qmd` |
-| 3.2  | Compute F1 scores                    | Python          | `src/models/check_f1_score.py`     | `output/f1_score/summary_yolo_batch8_imgsz256_base.csv` <br> `output/f1_score/summary_yolo_batch8_imgsz256_cv.csv`           | `notebooks/models.qmd` |
-| 3.3  | Predict across all tiles             | Python          | `src/models/predict_all_tiles.py`  | `data/intermediate/predicted_tiles/results_all_tiles.gpkg`                                                                   | `notebooks/models.qmd` |
-| 3.4  | Filter tiles by confidence threshold | Python          | `src/models/detect_valid_tiles.py` | `data/intermediate/predicted_tiles/waste_points.gpkg`                                                                        | `notebooks/models.qmd` | -->
 
 ### **3.1 [Python] Train YOLO models**
 
