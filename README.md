@@ -63,7 +63,9 @@ Manual annotation of waste / non-waste locations on raw imagery tiles.
 * **Notebook:**
   —
 
-![Annotation example](99_others/figure_for_README/waste_poiint.png){width=500px}
+<center>
+  <img src="99_others/figure_for_README/waste_poiint.png" width="500"/>
+</center>
 
 ---
 
@@ -119,8 +121,11 @@ Creates spatial cross-validation groups based on clustering of image tile coordi
 * **Notebook:**
   `notebooks/data.qmd`
 
-![SCV Results](99_others/figure_for_README/scv_white.png){width=500px}
+<!-- ![SCV Results](99_others/figure_for_README/scv_white.png){width=500px} -->
 
+<center>
+  <img src="99_others/figure_for_README/scv_white.png" width="500"/>
+</center>
 
 
 ---
