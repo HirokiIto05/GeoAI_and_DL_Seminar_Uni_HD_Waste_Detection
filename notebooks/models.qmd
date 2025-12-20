@@ -48,11 +48,6 @@ from src.models.check_f1_score import *
 ```
 
 ```{python}
-# Load the trained highest-performance model
-model = YOLO(here("models/runs/batch8_imgsz256/cv1/train/weights/best.pt"))
-```
-
-```{python}
 # Random Sampling Analysis
 list_test_waste_base = generate_test_base(is_waste_i=True)
 list_test_non_waste_base = generate_test_base(is_waste_i=False)
@@ -117,6 +112,11 @@ from src.models.predict_all_files import *
 ```
 
 ```{python}
+# Load the trained highest-performance model
+model = YOLO(here("models/runs/batch8_imgsz256/cv1/train/weights/best.pt"))
+```
+
+```{python}
 # delete_all_predict()
 
 # Load all images, read them, and save results as a text file.
@@ -129,7 +129,7 @@ df_all['tile_id'] = df_all['tile_id'].str.replace('.png', '', regex=False)
 
 # This command can be used in terminal to run prediction on all tiles and save the results
 # In practical, I recommend to run the following command in terminal instead of running the above code because it is much faster.
-# yolo predict model=models/runs/batch8_imgsz256/cv4/train/weights/best.pt source=01_data/intermediate/tiles_png/ save=False save_txt=True project=05_output/results_all_tiles/batch8_imgsz256/ 
+# yolo predict model=models/runs/batch8_imgsz256/cv4/train/weights/best.pt source=data/intermediate/tiles_png/ save=False save_txt=True project=data/intermediate/predicted_all_tiles/batch8_imgsz256/ 
 ```
 
 
