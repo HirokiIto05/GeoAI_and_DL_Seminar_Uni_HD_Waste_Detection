@@ -10,7 +10,7 @@ from pyprojroot.here import here
 
 def delete_all_predict():
 
-    folder_path = "output/results_all_tiles/predict/labels"
+    folder_path = "data/intermediate/predicted_tiles/predict/labels"
 
     for file_path in Path(here(folder_path)).iterdir():
         print(file_path)
