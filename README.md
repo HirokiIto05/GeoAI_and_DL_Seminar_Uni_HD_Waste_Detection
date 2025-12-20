@@ -1,4 +1,4 @@
-# Overview
+# **Overview**
 The aim of this project is to identify illegally dumped waste in Freetown, Sierra Leone. The project was carried out using a machine learning approach (YOLO v11). The repository includes all relevant code.
 
 The **src** directory contains a set of functions, and these functions are run — and outputs are saved — through the files in the **notebooks/** directory.
@@ -37,123 +37,328 @@ Here is a cleaner, fully formatted **Markdown version** of your workflow script:
 
 ## **1. Image Preparation**
 
-### ** Split images into tiles — Python**
-
-| Step | Task                              | Tool / Language | Inputs / Functions                                                 | Outputs                                         | Notebook             |
+<!-- | Step | Task                              | Tool / Language | Inputs / Functions                                                 | Outputs                                         | Notebook             |
 | ---- | --------------------------------- | --------------- | ------------------------------------------------------------------ | ----------------------------------------------- | -------------------- |
 | 1.1  | Split images into tiles           | Python          | `src/data/split_images.py`                                         | `data/raw/tiles/*.tif`                          | `notebooks/data.qmd` |
 | 1.2  | Annotate points                   | QGIS            | —                                                                  | `data/raw/merged.gpkg`                          | —                    |
 | 1.3  | Assign files to folders           | Python          | `src/data/assign_files_base.py` <br> `src/data/assign_files_cv.py` | `data/raw/images/` <br> `data/raw/images_test/` | `notebooks/data.qmd` |
-| 1.4  | Convert `.tif` → `.png` (testing) | Python          | `src/data/convert_tif_to_png.py`                                   | `data/intermediate/images_test/`                | `notebooks/data.qmd` |
+| 1.4  | Convert `.tif` → `.png` (testing) | Python          | `src/data/convert_tif_to_png.py`                                   | `data/intermediate/images_test/`                | `notebooks/data.qmd` | -->
+
+
+### **1.1 [Python] Split images into tiles**
+
+Breaks large images into smaller tile subsets for processing.
+
+* **Input:**
+  `data/raw/geotiff/690585b76415e43597ffd7eb.tif.tif`
+* **Output:**
+  `data/raw/tiles/*.tif`
+* **Function:**
+  `src/data/split_images.py`
+* **Notebook:**
+  `notebooks/data.qmd`
+
+---
+
+### **1.2 [QGIS] Annotate points**
+
+Manual annotation of waste / non-waste locations on raw imagery tiles.
+
+* **Input:**
+  `data/raw/geotiff/690585b76415e43597ffd7eb.tif.tif`
+* **Output:**
+  `data/raw/merged.gpkg`
+* **Notebook:**
+  —
+
+---
+
+### **1.3 [Python] Assign files to folders**
+
+Sorts annotated tiles into training/validation/test folders for model input.
+
+* **Input:**
+  `data/raw/merged.gpkg`
+* **Outputs:**
+  `data/raw/images/`
+  `data/raw/images_test/`
+* **Function:**
+  `src/data/assign_files_base.py`
+  `src/data/assign_files_cv.py`
+* **Notebook:**
+  `notebooks/data.qmd`
+
+---
+
+### **1.4 [Python] Convert `.tif` → `.png` for testing**
+
+Creates PNG test images for YOLO inference and prediction analysis.
+
+* **Input:**
+  `data/raw/images_test/`
+  `data/raw/tiles/`
+* **Output:**
+  `data/intermediate/images_test/`
+  `data/intermediate/tiles_png/`
+* **Function:**
+  `src/data/convert_tif_to_png.py`
+* **Notebook:**
+  `notebooks/data.qmd`
 
 ---
 
 ## **2. Spatial Cross-Validation**
 
-### ** Generate spatial folds (k-means clustering) — Python**
+### **2.1 [Python] Generate spatial folds (k-means clustering)**
 
-**Input Function:**
-`src/data/clustering.py`
+Creates spatial cross-validation groups based on clustering of image tile coordinates.
 
-**Output:**
-`data/intermediate/points_for_cv.gpkg`
+* **Input:**
+  `data/raw/merged.gpkg` 
 
-**Execution Notebook:**
-`notebooks/data.qmd`
+* **Output:**
+  `data/intermediate/points_for_cv.gpkg`
+
+* **Function:**
+  `src/data/clustering.py`
+
+* **Notebook:**
+  `notebooks/data.qmd`
 
 ---
 
 ## **3. Model Training and Evaluation**
 
-### ** Train YOLO models — Python**
+<!-- | Step | Task                                 | Tool / Language | Inputs / Functions                 | Outputs                                                                                                                      | Notebook               |
+| ---- | ------------------------------------ | --------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| 3.1  | Train YOLO models                    | Python          | `src/models/yolo_11v_cls.py`       | `models/runs/batch8_imgsz256/base/` <br> `models/runs/batch8_imgsz256/cv1/` <br> `models/runs/batch8_imgsz256/cv2/` <br> `…` | `notebooks/models.qmd` |
+| 3.2  | Compute F1 scores                    | Python          | `src/models/check_f1_score.py`     | `output/f1_score/summary_yolo_batch8_imgsz256_base.csv` <br> `output/f1_score/summary_yolo_batch8_imgsz256_cv.csv`           | `notebooks/models.qmd` |
+| 3.3  | Predict across all tiles             | Python          | `src/models/predict_all_tiles.py`  | `data/intermediate/predicted_tiles/results_all_tiles.gpkg`                                                                   | `notebooks/models.qmd` |
+| 3.4  | Filter tiles by confidence threshold | Python          | `src/models/detect_valid_tiles.py` | `data/intermediate/predicted_tiles/waste_points.gpkg`                                                                        | `notebooks/models.qmd` | -->
 
-**Input Function:**
-`src/models/yolo_11v_cls.py`
+### **3.1 [Python] Train YOLO models**
 
-**Outputs:**
+Trains YOLO image classification models using baseline and spatial CV datasets.
 
-```
-models/runs/batch8_imgsz256/base/
-models/runs/batch8_imgsz256/cv1/
-models/runs/batch8_imgsz256/cv2/
-…
-```
+* **Input:**
+  `data/raw/images/`
 
-**Execution Notebook:**
-`notebooks/models.qmd`
+* **Output:**
+  `models/runs/batch8_imgsz256/base/`
+  `models/runs/batch8_imgsz256/cv1/`
+  `models/runs/batch8_imgsz256/cv2/`
+  `…`
 
-### ** Compute F1 scores — Python**
+* **Function:**
+  `src/models/yolo_11v_cls.py`
 
-**Input Function:**
-`src/models/check_f1_score.py`
+* **Notebook:**
+  `notebooks/models.qmd`
 
-**Outputs:**
+---
 
-```
-output/f1_score/summary_yolo_batch8_imgsz256_base.csv
-output/f1_score/summary_yolo_batch8_imgsz256_cv.csv
-```
+### **3.2 [Python] Compute F1 scores**
 
-**Execution Notebook:**
-`notebooks/models.qmd`
+Evaluates YOLO model accuracy using precision/recall metrics and summarizes performance of random sampling and across CV folds.
 
-### ** Predict across all tiles — Python**
+* **Input:**
+  `data/raw/images_test/`
+  `models/runs/batch8_imgsz256/base/`
+  `models/runs/batch8_imgsz256/cv*/`
 
-**Input Function:**
-`src/models/predict_all_tiles.py`
+* **Output:**
+  `output/f1_score/summary_yolo_batch8_imgsz256_base.csv`
+  `output/f1_score/summary_yolo_batch8_imgsz256_cv.csv`
 
-**Output:**
-`data/intermediate/predicted_tiles/results_all_tiles.gpkg`
+* **Function:**
+  `src/models/check_f1_score.py`
 
-**Execution Notebook:**
-`notebooks/models.qmd`
+* **Notebook:**
+  `notebooks/models.qmd`
 
-### ** Filter tiles by confidence threshold — Python**
+---
 
-**Input Function:**
-`src/models/detect_valid_tiles.py`
+### **3.3 [Python] Predict across all tiles**
 
-**Output:**
-`data/intermediate/predicted_tiles/waste_points.gpkg`
+Generates YOLO predictions for every image tile in the dataset and exports results as a .txt files.
 
-**Execution Notebook:**
-`notebooks/models.qmd`
+* **Input:**
+  `data/intermediate/tiles_png/`
+
+* **Output:**
+  `data/intermediate/predicted_all_tiles/predict/labels/*txt`
+
+* **Function:**
+  `src/models/predict_all_tiles.py`
+
+* **Notebook:**
+  `notebooks/models.qmd`
+
+---
+
+### **3.4 [Python] Filter tiles by confidence threshold**
+
+Selects high-confidence YOLO detections and saves only valid waste predictions.
+
+* **Input:**
+  `data/intermediate/predicted_all_tiles/predict/labels/*txt`
+
+* **Output:**
+  `data/intermediate/predicted_tiles/results_all_tiles_97.gpkg`
+
+* **Function:**
+  `src/models/detect_valid_tiles.py`
+
+* **Notebook:**
+  `notebooks/models.qmd`
+
+
+
 
 ---
 
 ## **4. Spatial Autocorrelation (Moran's I)**
 
-* **[QGIS] Generate spatial grids**
-  Resolutions: 10 m, 20 m, 30 m, 40 m
+### **4.1 [QGIS] Convert predicted waste grids to point centroids**
 
-* **[QGIS] Convert predicted waste grids to point centroids**
-  **Output:**
-  `data/predicted_tiles/results_all_tiles_points.gpkg`
+Transforms grid polygons into centroid point geometries for spatial autocorrelation analysis.
 
-* **[Python] Calculate waste density per grid size**
+* **Input:**
+  `data/intermediate/predicted_tiles/results_all_tiles_97.gpkg`
+
+* **Output:**
+  `data/intermediate/predicted_tiles/results_all_tiles_points.gpkg`
+
+* **Function:**
+  —
+
+* **Notebook:**
+  —
+
+---
+
+
+### **4.2 [Python] Calculate waste density per grid size**
+
+Computes waste density statistics for multiple spatial grid resolutions.
+
+* **Input:**
+  `data/raw/grid/moran_10` 
+  `data/raw/grid/moran_20` 
+  `data/raw/grid/moran_30` 
+  `data/raw/grid/moran_40` 
+  `data/intermediate/predicted_tiles/results_all_tiles_points.gpkg`
+
+* **Output:**
+  `data/intermediate/density/waste_density_10.gpkg`
+  `data/intermediate/density/waste_density_20.gpkg`
+  `data/intermediate/density/waste_density_30.gpkg`
+  `data/intermediate/density/waste_density_40.gpkg`
+
+* **Function:**
   `src/analysis/calculate_waste_density_grids.py`
-  Outputs:
 
-  * `data/density/waste_density_10.gpkg`
-  * `data/density/waste_density_20.gpkg`
-  * …
+* **Notebook:**
+  `notebooks/analysis.qmd`
 
-* **[Python] Compute Global Moran’s I using grid density values**
+---
 
-* **[Python] Compute Local Moran’s I (5 m and 20 m grids)**
+### **4.3 [Python] Compute Global Moran’s I using grid density values**
+
+Measures global spatial clustering patterns using waste density values across grid cells.
+
+* **Input:**
+  `data/intermediate/predicted_tiles/results_all_tiles_97.gpkg`
+  `data/intermediate/density/waste_density_10.gpkg`
+  `data/intermediate/density/waste_density_20.gpkg`
+  `data/intermediate/density/waste_density_30.gpkg`
+  `data/intermediate/density/waste_density_40.gpkg`
+
+* **Output:**
+  `data/intermediate/predicted_tiles/results_all_tiles_points.gpkg`
+
+* **Function:**
+  `src/analysis/moran.py`
+
+* **Notebook:**
+  `notebooks/analysis.qmd`
+
+---
+
+### **4.4 [Python] Compute Local Moran’s I (5 m and 20 m grids)**
+
+Identifies local spatial clusters and outliers at different grid sizes.
+
+* **Input:**
+  `data/intermediate/predicted_tiles/results_all_tiles_97.gpkg`
+  `data/intermediate/density/waste_density_20.gpkg`
+
+* **Output:**
+  `data/intermediate/moran/waste_moran_5.gpkg`
+  `data/intermediate/moran/waste_moran_20.gpkg`
+
+* **Function:**
+  `src/analysis/moran.py`
+
+* **Notebook:**
+  `notebooks/analysis.qmd`
 
 ---
 
 ## **5. Waterway Analysis**
 
-* **[QGIS] Generate centroids**
-  Input: `waste_points.gpkg`
+### **5.1 [QGIS] Extract waterways from OpenStreetMap**
 
-* **[QGIS] Extract waterways from OpenStreetMap**
+Retrieves waterway features (e.g., rivers, streams) for spatial intersection analysis.
 
-* **[QGIS] Create buffer zones**
+* **Input:**
+  — 
 
-* **[Python] Identify waste points within buffer regions**
+* **Output:**
+  `data/raw/waterway/waterways.gpkg`
+
+* **Function:**
+  —
+
+* **Notebook:**
+  —
+
+---
+
+### **5.2 [QGIS] Create buffer zones**
+
+Generates buffer polygons around waterways to determine proximity relationships.
+
+* **Input:**
+  `data/raw/waterway/waterways.gpkg`
+
+* **Output:**
+  `data/raw/waterway/buffer_waterway.gpkg`
+
+* **Function:**
+  —
+
+* **Notebook:**
+  —
+
+---
+
+### **5.4 [Python] Identify waste points within buffer regions**
+
+Detects waste hotspots located near waterways and exports results for interpretation.
+
+* **Input:**
+  `data/intermediate/moran/waste_moran_5.gpkg`
+  `data/raw/waterway/buffer_waterway.gpkg`
+
+* **Output:**
+  `data/intermediate/waterway/waste_points_waterway.gpkg` 
+
+* **Function:**
+  `src/analysis/waterway_analysis.py`
+
+* **Notebook:**
+  `notebooks/analysis.qmd`
 
 ---
 
