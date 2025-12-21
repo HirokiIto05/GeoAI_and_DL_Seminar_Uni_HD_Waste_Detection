@@ -1,11 +1,14 @@
 # **Overview**
+
 The aim of this project is to identify illegally dumped waste in Freetown, Sierra Leone. The project was carried out using a machine learning approach (YOLO v11). The repository includes all relevant code.
 
-The **src** directory contains a set of functions, and these functions are run — and outputs are saved — through the files in the **notebooks/** directory.
+The src directory contains a set of functions, and these functions are run and save outputs through the files in the notebooks/ directory.
 
-Functions in **src/data** are executed in **notebooks/data**, and functions in **src/models** are executed in **notebooks/models.qmd**. In this way, the **src** and **notebooks** directories correspond to each other.
+Functions in src/data are executed in notebooks/data, and functions in src/models are executed in notebooks/models.qmd. In this way, the src and notebooks directories correspond to each other.
 
-Because the workflow moves back and forth between QGIS and Python, please refer to the **# WORKFLOW** section for more details.
+Because the workflow moves back and forth between QGIS and Python, please refer to the # Workflow section for more details.
+
+
 
 
 
@@ -18,16 +21,25 @@ PROJECT/
 │   │   ├── geotiff/               # Original large geotiff images
 │   │   ├── grids/                 # Spatial grids
 │   │   ├── images/
-│   │   │   ├── base/
+│   │   │   ├── base/              # Random sampling
 │   │   │   │   ├── train/
 │   │   │   │   └── val/
-│   │   │   ├── cv1/
+│   │   │   ├── cv1/               # Spatial CV fold 1
 │   │   │   │   ├── train/
 │   │   │   │   └── val/
-│   │   │   └── images_test/
-│   │   │       ├── base/
+│   │   │   ├── cv2/               # Spatial CV fold 2
+│   │   │   │   ├── train/
+│   │   │   │   └── val/
+│   │   │   ├── ...                # ...
+│   │   │   │                      
+│   │   │   └── cv5/               # Spatial CV fold 5
+│   │   │       ├── train/
+│   │   │       └── val/
+│   │   │
+│   │   ├── images_test/
+│   │   │       ├── base/          # Random sampling
 │   │   │       │   └── test/
-│   │   │       ├── cv1/
+│   │   │       ├── cv1/           # Spatial CV fold 1
 │   │   │       │   └── test/
 │   │   │       │── ...           
 │   │   │       │
