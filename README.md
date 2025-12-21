@@ -6,7 +6,7 @@ The **src** directory contains a set of functions, and these functions are run â
 Functions in **src/data** are executed in **notebooks/data**, and functions in **src/models** are executed in **notebooks/models.qmd**. In this way, the **src** and **notebooks** directories correspond to each other.
 
 Because the workflow moves back and forth between QGIS and Python, please refer to the **# WORKFLOW** section for more details.
-
+<!-- 
 # **Project Folder Structure(Omitted)**
 
 
@@ -24,12 +24,7 @@ notebooks/ # Execution scripts
   models.qmd
   visualization.qmd
 models/ # Trained model outputs
-output/ # Result outputs (e.g., F1 scores)
-
-
-# **Data Processing Workflow**
-
-Here is a cleaner, fully formatted **Markdown version** of your workflow script:
+output/ # Result outputs (e.g., F1 scores) -->
 
 ---
 
