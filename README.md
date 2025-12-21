@@ -29,23 +29,27 @@ PROJECT/
 │   │   │       │   └── test/
 │   │   │       ├── cv1/
 │   │   │       │   └── test/
-│   │   │       └── ...           
+│   │   │       │── ...           
+│   │   │       │
+│   │   │       └── cv5/
+│   │   │           └── test/
+│   │   │
 │   │   ├── points/                # Annotated points
 │   │   ├── tiles/                 # Image tiles 
 │   │   └── waterway/              # Waterway gpkg file
 │   │
-│   ├── intermediate/
-│   │   ├── density/               # density data
-│   │   ├── moran/                 # Moran's I results (5m & 20m grids)
-│   │   ├── predicted_tiles/       # all predicted tiles
-│   │   ├── scv/                   # spatial cross-validation points
-│   │   ├── tiles_png/             # all PNG tiles 
-│   │   └── tiles_test/            # tiles for F1 score calculation
+│   └── intermediate/
+│       ├── density/               # density data
+│       ├── moran/                 # Moran's I results (5m & 20m grids)
+│       ├── predicted_tiles/       # all predicted tiles
+│       ├── scv/                   # spatial cross-validation points
+│       ├── tiles_png/             # all PNG tiles 
+│       └── tiles_test/            # tiles for F1 score calculation
 │
 ├── notebooks/
 │   ├── data.qmd                   # data preprocessing
-│   ├── analysis.qmd
-│   ├── models.qmd
+│   ├── analysis.qmd               
+│   ├── models.qmd                 # model training, evaluation, and prediction
 │   └── visualization.qmd
 │
 ├── src/
@@ -76,8 +80,9 @@ PROJECT/
 ├── models/
 │   └── runs/
 │       └── batch8_imgsz256/
-│           ├── base/              # YOLO results
-│           ├── cv1/
+│           ├── base/              # random sampling model
+│           ├── cv1/               # spatial CV fold 1
+│           ├── cv2/               # spatial CV fold 2
 │           └── ...
 │
 └── output/
@@ -108,7 +113,52 @@ output/ # Result outputs (e.g., F1 scores) -->
 
 ---
 
-# **Data Processing Workflow**
+
+# **Data Overview**
+
+# Project Data Overview
+
+## 1. Geo Data
+**Source:** OpenAerialMap  
+**Data ID:** `69075f1de47603686de24fe8`  
+**Image Viewer:**  
+[OpenAerialMap Image Link](https://map.openaerialmap.org/#/-13.27618360519409,8.482474538571994,15/square/033321123222113100/69075f1de47603686de24fe8?_k=t1hoyf)  
+
+---
+
+## 2. Grid Data
+**Creation Method:**  
+QGIS → Vector → Research Tools → Create Grid (5m*5m)
+
+**Google Drive Folder:**  
+[Grid Data Folder](https://drive.google.com/drive/folders/1uq5wtD4CiXPRjCRfOn723Q1kq4544kBT?usp=sharing)  
+
+---
+
+## 3. Annotation Data
+**Method:** Manual annotation using QGIS 
+
+**Access Path:**  
+Points → merged.gpkg
+
+**Google Drive Folder:**  
+[Annotation Data Folder](https://drive.google.com/drive/folders/1uq5wtD4CiXPRjCRfOn723Q1kq4544kBT?usp=sharing)  
+
+---
+
+## 4. Waterway Data
+**Source:** QGIS plugin – QuickOSM  
+
+**Access Path:**  
+QGIS → Vector → QuickOSM  
+
+**Key Filter:** `[waterway]`  
+
+**Plugin Information:**  
+[QuickOSM Plugin Page](https://plugins.qgis.org/plugins/QuickOSM/#plugin-about)
+
+
+# **Workflow**
 
 ## **1. Image Preparation**
 
