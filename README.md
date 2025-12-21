@@ -6,6 +6,86 @@ The **src** directory contains a set of functions, and these functions are run �
 Functions in **src/data** are executed in **notebooks/data**, and functions in **src/models** are executed in **notebooks/models.qmd**. In this way, the **src** and **notebooks** directories correspond to each other.
 
 Because the workflow moves back and forth between QGIS and Python, please refer to the **# WORKFLOW** section for more details.
+
+
+
+# **Project Folder Structure**
+```
+PROJECT/
+├── data/
+│   ├── raw/
+│   │   ├── boundary/              # project boundary 
+│   │   ├── geotiff/               # Original large geotiff images
+│   │   ├── grids/                 # Spatial grids
+│   │   ├── images/
+│   │   │   ├── base/
+│   │   │   │   ├── train/
+│   │   │   │   └── val/
+│   │   │   ├── cv1/
+│   │   │   │   ├── train/
+│   │   │   │   └── val/
+│   │   │   └── images_test/
+│   │   │       ├── base/
+│   │   │       │   └── test/
+│   │   │       ├── cv1/
+│   │   │       │   └── test/
+│   │   │       └── ...           
+│   │   ├── points/                # Annotated points
+│   │   ├── tiles/                 # Image tiles 
+│   │   └── waterway/              # Waterway gpkg file
+│   │
+│   ├── intermediate/
+│   │   ├── density/               # density data
+│   │   ├── moran/                 # Moran's I results (5m & 20m grids)
+│   │   ├── predicted_tiles/       # all predicted tiles
+│   │   ├── scv/                   # spatial cross-validation points
+│   │   ├── tiles_png/             # all PNG tiles 
+│   │   └── tiles_test/            # tiles for F1 score calculation
+│
+├── notebooks/
+│   ├── data.qmd                   # data preprocessing
+│   ├── analysis.qmd
+│   ├── models.qmd
+│   └── visualization.qmd
+│
+├── src/
+│   ├── data/
+│   │   ├── assign_file_base.py
+│   │   ├── assign_file_cv.py
+│   │   ├── clustering.py
+│   │   ├── convert_tif_to_png.py
+│   │   └── split_images.py
+│   │
+│   ├── analysis/
+│   │   ├── calculate_waste_density_grids.py
+│   │   ├── moran.py
+│   │   └── waterway_analysis.py
+│   │
+│   ├── models/
+│   │   ├── check_f1_score.py
+│   │   ├── detect_valid_tiles.py
+│   │   ├── predict_all_tiles.py
+│   │   └── yolo_11v_cls.py
+│   │
+│   └── visualisation/
+│       ├── figure2_moran_plot.py
+│       ├── table1_scv.py
+│       ├── table2_local_moran.py
+│       └── table3_waterway.py
+│
+├── models/
+│   └── runs/
+│       └── batch8_imgsz256/
+│           ├── base/              # YOLO results
+│           ├── cv1/
+│           └── ...
+│
+└── output/
+    └── f1_score/
+        ├── summary_yolo_batch8_imgsz256_base.csv
+        └── summary_yolo_batch8_imgsz256_cv.csv
+```
+
 <!-- 
 # **Project Folder Structure(Omitted)**
 
@@ -352,81 +432,3 @@ Detects waste hotspots located near waterways and exports results for interpreta
   `notebooks/analysis.qmd`
 
 ---
-
-
-# **Project Folder Structure**
-```
-PROJECT/
-├── data/
-│   ├── raw/
-│   │   ├── boundary/              # project boundary 
-│   │   ├── geotiff/               # Original large geotiff images
-│   │   ├── grids/                 # Spatial grids
-│   │   ├── images/
-│   │   │   ├── base/
-│   │   │   │   ├── train/
-│   │   │   │   └── val/
-│   │   │   ├── cv1/
-│   │   │   │   ├── train/
-│   │   │   │   └── val/
-│   │   │   └── images_test/
-│   │   │       ├── base/
-│   │   │       │   └── test/
-│   │   │       ├── cv1/
-│   │   │       │   └── test/
-│   │   │       └── ...           
-│   │   ├── points/                # Annotated points
-│   │   ├── tiles/                 # Image tiles 
-│   │   └── waterway/              # Waterway gpkg file
-│   │
-│   ├── intermediate/
-│   │   ├── density/               # density data
-│   │   ├── moran/                 # Moran's I results (5m & 20m grids)
-│   │   ├── predicted_tiles/       # all predicted tiles
-│   │   ├── scv/                   # spatial cross-validation points
-│   │   ├── tiles_png/             # all PNG tiles 
-│   │   └── tiles_test/            # tiles for F1 score calculation
-│
-├── notebooks/
-│   ├── data.qmd                   # data preprocessing
-│   ├── analysis.qmd
-│   ├── models.qmd
-│   └── visualization.qmd
-│
-├── src/
-│   ├── data/
-│   │   ├── assign_file_base.py
-│   │   ├── assign_file_cv.py
-│   │   ├── clustering.py
-│   │   ├── convert_tif_to_png.py
-│   │   └── split_images.py
-│   │
-│   ├── analysis/
-│   │   ├── calculate_waste_density_grids.py
-│   │   ├── moran.py
-│   │   └── waterway_analysis.py
-│   │
-│   ├── models/
-│   │   ├── check_f1_score.py
-│   │   ├── detect_valid_tiles.py
-│   │   ├── predict_all_tiles.py
-│   │   └── yolo_11v_cls.py
-│   │
-│   └── visualisation/
-│       ├── figure2_moran_plot.py
-│       ├── table1_scv.py
-│       ├── table2_local_moran.py
-│       └── table3_waterway.py
-│
-├── models/
-│   └── runs/
-│       └── batch8_imgsz256/
-│           ├── base/              # YOLO results
-│           ├── cv1/
-│           └── ...
-│
-└── output/
-    └── f1_score/
-        ├── summary_yolo_batch8_imgsz256_base.csv
-        └── summary_yolo_batch8_imgsz256_cv.csv
-```
