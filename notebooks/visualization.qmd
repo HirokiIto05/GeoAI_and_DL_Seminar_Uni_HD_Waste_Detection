@@ -1,16 +1,18 @@
 ```{python}
+import pandas as pd
+import sys
+from great_tables import GT
+from pyprojroot.here import here
+```
+
+```{python}
 sys.path.append("..")
 ```
 
 # Table1: Summary of YOLOv11 Classification Model Performance
-```{python}
-import pandas as pd
-from great_tables import GT
-```
 
 ```{python}
 table_base = pd.read_csv(here("output/f1_score/summary_yolo_batch8_imgsz256_base.csv"))
-table_base
 table_cv = pd.read_csv(here("output/f1_score/summary_yolo_batch8_imgsz256.csv"))
 ```
 
@@ -28,18 +30,14 @@ from src.visualisation.table2_local_moran import *
 ```
 
 ```{python}
-df_results_20 = gpd.read_file(here("data/intermediate/moran/waste_moran_20.gpkg"))
-df_results_5 = gpd.read_file(here("data/intermediate/moran/waste_moran_5.gpkg"))
+df_results_5 = gpd.read_file(here("output/density/waste_moran_5_points.gpkg"))
+df_results_5
+df_prop_5 = df_results_5.groupby(["quadrant", "significant"]).size()
 
-df_prop_20 = df_results_20.groupby(["quadrant"]).size()
-df_prop_5 = df_results_5.groupby(["quadrant"]).size()
-
-quadrant_summary_20 = generate_table_quadrant_summary(df_results_20)
 quadrant_summary_5 = generate_table_quadrant_summary(df_results_5)
 ```
 
 ```{python}
-quadrant_summary_20
 quadrant_summary_5
 ```
 
@@ -73,60 +71,18 @@ The results are shown in the table below.
 ```{python}
 # read data
 df_waste_5 = read_data(grid_size=5)
-df_waste_10 = read_data(grid_size=10)
-df_waste_20 = read_data(grid_size=20)
-df_waste_30 = read_data(grid_size=30)
-df_waste_40 = read_data(grid_size=40)
 # Create spatial weights matrix
 w_5 = calculate_weights(df_waste_5)
-w_10 = calculate_weights(df_waste_10)
-w_20 = calculate_weights(df_waste_20)
-w_30 = calculate_weights(df_waste_30)
-w_40 = calculate_weights(df_waste_40)
 # Calculate global Moran's I
 mi_5 = calculate_global_moran(df_waste_5, w_5)
-mi_10 = calculate_global_moran(df_waste_10, w_10)
-mi_20 = calculate_global_moran(df_waste_20, w_20)
-mi_30 = calculate_global_moran(df_waste_30, w_30)
-mi_40 = calculate_global_moran(df_waste_40, w_40)
 
 df_5 = summary_moran(mi_5, label="5m")
-df_10 = summary_moran(mi_5, label="10m")
-df_20 = summary_moran(mi_20, label="20m")
-df_30 = summary_moran(mi_20, label="30m")
-df_40 = summary_moran(mi_20, label="40m")
 
-df_moran_summary = pd.concat([df_5, df_10, df_20, df_30, df_40], axis=0).reset_index(drop=True)
-
-p = plot_morans_I(df_moran_summary)
+p = plot_morans_I(df_5)
 ```
 
 5m’s grid(raw grid)
 Moran’s I: 0.26788
 Expected I: -0.00000
 Z-score: 997.613
-P-value (permutation): 0.001000
-
-10m’s grid
-Moran’s I: 0.41502
-Expected I: -0.00000
-Z-score: 2210.696
-P-value (permutation): 0.001000
-
-20m’s grid
-Moran’s I: 0.47690
-Expected I: -0.00000
-Z-score: 4871.181
-P-value (permutation): 0.001000
-
-30m’s grid
-Moran’s I: 0.49164
-Expected I: -0.00000
-Z-score: 7501.644
-P-value (permutation): 0.001000
-
-40m’s grid
-Moran’s I: 0.49915
-Expected I: -0.00000
-Z-score: 10925.594
 P-value (permutation): 0.001000

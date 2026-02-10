@@ -19,7 +19,7 @@ from plotnine import *
 
 def read_data(grid_size):
     if grid_size == 5:  
-        df = gpd.read_file(here("data/predicted_tiles/results_all_tiles_97.gpkg"))
+        df = gpd.read_file(here("data/intermediate/predicted_tiles/results_all_tiles_97.gpkg"))
 
         df_waste = df.copy()
         dict_mapping = {"waste": 1, "non_waste": 0}
@@ -27,13 +27,13 @@ def read_data(grid_size):
         df_waste = df_waste.dropna(subset=["density", "geometry"]).reset_index(drop=True)
         df_waste["density"].value_counts()
     elif grid_size == 20:
-        df = gpd.read_file(here("data/density/waste_density_20.gpkg"))
+        df = gpd.read_file(here("data/intermediate/density/waste_density_20.gpkg"))
 
         df_waste = df.copy()
         df_waste = df_waste.dropna(subset=["density", "geometry"]).reset_index(drop=True)
         df_waste["density"].value_counts()
     
-    return df
+    return df_waste
 
 
 def calculate_weights(df):

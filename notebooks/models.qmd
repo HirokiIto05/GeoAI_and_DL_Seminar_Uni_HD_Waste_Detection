@@ -5,6 +5,10 @@ from ultralytics import YOLO
 import os
 from pyprojroot.here import here
 
+import csv
+import sys
+
+
 import torch
 from great_tables import GT
 from great_tables.data import gtcars
@@ -76,15 +80,18 @@ df_summary_base.to_csv(here("output/f1_score/summary_yolo_batch8_imgsz256_base.c
 list_cv_waste = generate_list_cv_test(is_waste_i=True)
 list_cv_non_waste = generate_list_cv_test(is_waste_i=False)
 
-df_cv_waste = pd.DataFrame(result_base_waste, columns=["file_name", "actual", "prediction", "is_correct"])
-df_cv_non_waste = pd.DataFrame(result_base_non_waste, columns=["file_name", "actual", "prediction", "is_correct"])
+# df_cv_waste = pd.DataFrame(result_base_waste, columns=["file_name", "actual", "prediction", "is_correct"])
+# df_cv_non_waste = pd.DataFrame(result_base_non_waste, columns=["file_name", "actual", "prediction", "is_correct"])
 
 results_waste = aggregate_accuracy_cvs(list_cv_waste, is_waste_i=True)
 results_non_waste = aggregate_accuracy_cvs(list_cv_non_waste, is_waste_i=False)
 
-
 metrics_cv = aggregate_score_summary(results_waste, results_non_waste)
 df_summary_f1 = concat_cv_score_df(metrics_cv)
+
+df_summary_f1['precision'].mean().round(3)
+df_summary_f1['recall'].mean().round(3)
+df_summary_f1['f1_score'].mean().round(3)
 
 list_epoch_info = summary_epoch()
 
@@ -103,6 +110,10 @@ df_summary['cv'] = df_summary['cv'].astype(str)
 df_summary['test_sample'] = df_summary['cv'].astype(int).map(dict_cv_color)
 
 # df_summary.to_csv(here("output/f1_score/summary_yolo_batch8_imgsz256.csv"), index=False)
+```
+
+```{python}
+average_summary = 
 ```
 
 
@@ -142,17 +153,19 @@ from src.models.detect_valid_tiles import *
 # Filter images classified as waste with confidence >= 0.97
 # Convert to DataFrame and write CSV
 
-dir_txt_files = here("output/results_all_tiles/batch8_imgsz256/predict/labels")
+dir_txt_files = here("data/intermediate/predicted_all_tiles/batch8_imgsz256/predict/labels")
+
+results = text_to_dataframe(dir_txt_files)
 
 df_results = pd.DataFrame(results)[["tile_id", "label", "score"]]
+df_results = df_results.drop_duplicates()
 
 df_results.loc[(df_results["label"] == "waste") & (df_results["score"] <= 0.97), "label"] = "non_waste"
 
+
 df_grid = gpd.read_file(here("data/raw/grid/grid_modified.gpkg"))
 
-df_grid_new = df_grid.merge(df_results, on="tile_id", how="left")
-
-df_grid_new.to_file(here("data/predicted_tiles/results_all_tiles_97.gpkg"), driver="GPKG")
+df_grid_new = df_grid.merge(df_results_confidence, on="tile_id", how="left")
 
 # Save results
 # df_grid_new.to_file(here("data/predicted_tiles/results_all_tiles_97.gpkg"), driver="GPKG")

@@ -1,6 +1,6 @@
-02_clean/
-03_analyze/
 99_cover/
+
+data/
 
 Dockerfile
 docker-compose.yml
@@ -10,10 +10,33 @@ docker-compose.yml
 *.tif
 data/intermediate/test_images/
 data/raw/test_images/
+data/raw/tiles
+data/intermediate/tiles_png
+data/intermediate/
 *.nc
-*.jpg
 *.png
+*.yaml
+*.js
+*.css
+*.pgw
+*.tex
+*.qpt
+*.html
+*.pdf
+*.pt
+*.jpg
 *.txt
 *.gpkg
+*.cache
+*.cpg
+*.dbf
+*.dbf
+*.gpkg-shm
+*.gpkg-wal
+*.xml
+*.csv
+*.geojson
+*.rtf
+
 
 src/
