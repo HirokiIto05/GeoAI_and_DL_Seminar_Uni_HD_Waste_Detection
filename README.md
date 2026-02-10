@@ -52,7 +52,7 @@ PROJECT/
 │   │
 │   └── intermediate/
 │       ├── density/               # density data
-│       ├── moran/                 # Moran's I results (5m & 20m grids)
+│       ├── moran/                 # Moran's I results 
 │       ├── predicted_tiles/       # all predicted tiles
 │       ├── scv/                   # spatial cross-validation points
 │       ├── tiles_png/             # all PNG tiles 
@@ -84,10 +84,8 @@ PROJECT/
 │   │   └── yolo_11v_cls.py
 │   │
 │   └── visualisation/
-│       ├── figure2_moran_plot.py
 │       ├── table1_scv.py
-│       ├── table2_local_moran.py
-│       └── table3_waterway.py
+│       └── table2_waterway.py
 │
 ├── models/
 │   └── runs/
@@ -370,42 +368,12 @@ Transforms grid polygons into centroid point geometries for spatial autocorrelat
 
 ---
 
-
-### **4.2 [Python] Calculate waste density per grid size**
-
-Computes waste density statistics for multiple spatial grid resolutions.
-
-* **Input:**
-  `data/raw/grid/moran_10` 
-  `data/raw/grid/moran_20` 
-  `data/raw/grid/moran_30` 
-  `data/raw/grid/moran_40` 
-  `data/intermediate/predicted_tiles/results_all_tiles_points.gpkg`
-
-* **Output:**
-  `data/intermediate/density/waste_density_10.gpkg`
-  `data/intermediate/density/waste_density_20.gpkg`
-  `data/intermediate/density/waste_density_30.gpkg`
-  `data/intermediate/density/waste_density_40.gpkg`
-
-* **Function:**
-  `src/analysis/calculate_waste_density_grids.py`
-
-* **Notebook:**
-  `notebooks/analysis.qmd`
-
----
-
-### **4.3 [Python] Compute Global Moran’s I using grid density values**
+### **4.2 [Python] Compute Global Moran’s I**
 
 Measures global spatial clustering patterns using waste density values across grid cells.
 
 * **Input:**
   `data/intermediate/predicted_tiles/results_all_tiles_97.gpkg`
-  `data/intermediate/density/waste_density_10.gpkg`
-  `data/intermediate/density/waste_density_20.gpkg`
-  `data/intermediate/density/waste_density_30.gpkg`
-  `data/intermediate/density/waste_density_40.gpkg`
 
 * **Output:**
   `data/intermediate/predicted_tiles/results_all_tiles_points.gpkg`
@@ -418,17 +386,15 @@ Measures global spatial clustering patterns using waste density values across gr
 
 ---
 
-### **4.4 [Python] Compute Local Moran’s I (5 m and 20 m grids)**
+### **4.3 [Python] Compute Local Moran’s I for 5 m grid**
 
 Identifies local spatial clusters and outliers at different grid sizes.
 
 * **Input:**
   `data/intermediate/predicted_tiles/results_all_tiles_97.gpkg`
-  `data/intermediate/density/waste_density_20.gpkg`
 
 * **Output:**
   `data/intermediate/moran/waste_moran_5.gpkg`
-  `data/intermediate/moran/waste_moran_20.gpkg`
 
 * **Function:**
   `src/analysis/moran.py`
