@@ -17,33 +17,21 @@ table_cv = pd.read_csv(here("output/f1_score/summary_yolo_batch8_imgsz256.csv"))
 ```
 
 ```{python}
-table1 = pd.concat([table_base, table_cv], ignore_index=True)
+table_average = table_cv[["precision", "recall", "f1_score"]].aggregate({'precision': 'mean', 'recall': 'mean', 'f1_score': 'mean'}).round(3)
+value_average = table_average.values.tolist()
+name_average = ["precision", "recall", "f1_score"]
+
+df_average = pd.DataFrame([value_average], columns=name_average)
+
+table1 = pd.concat([table_base, df_average], ignore_index=True)
 table1
 gt = GT(table1)
 gt.show()
 ```
 
-# Table2: Local Moran's I Analysis
-
+# Table2: Waterway Analysis
 ```{python}
-from src.visualisation.table2_local_moran import *
-```
-
-```{python}
-df_results_5 = gpd.read_file(here("output/density/waste_moran_5_points.gpkg"))
-df_results_5
-df_prop_5 = df_results_5.groupby(["quadrant", "significant"]).size()
-
-quadrant_summary_5 = generate_table_quadrant_summary(df_results_5)
-```
-
-```{python}
-quadrant_summary_5
-```
-
-# Table3: Waterway Analysis
-```{python}
-from src.visualisation.table3_waterway import *
+from src.visualisation.table2_waterway import *
 ```
 ```{python}
 # Read data
@@ -62,23 +50,6 @@ df_summary_waterway = pd.DataFrame({
 })
 
 df_summary_waterway
-```
-
-# Figure1
-
-The calculation takes a very long time, so it is commented out. Please run it as needed.
-The results are shown in the table below.
-```{python}
-# read data
-df_waste_5 = read_data(grid_size=5)
-# Create spatial weights matrix
-w_5 = calculate_weights(df_waste_5)
-# Calculate global Moran's I
-mi_5 = calculate_global_moran(df_waste_5, w_5)
-
-df_5 = summary_moran(mi_5, label="5m")
-
-p = plot_morans_I(df_5)
 ```
 
 5m’s grid(raw grid)
